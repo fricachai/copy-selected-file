@@ -239,8 +239,57 @@ def build_zip(selected_files: list) -> bytes:
 # =============================
 # Streamlit UI
 # =============================
-st.set_page_config(page_title="APA 參考文獻 ↔ 檔案比對（ZIP 版）", layout="wide")
-st.title("APA 參考文獻 ↔ 檔案比對（ZIP 版：支援 100+ 檔）")
+st.set_page_config(page_title="網頁工具箱", layout="wide")
+st.title("網頁工具箱")
+
+st.header("平均數計算系統")
+st.caption("輸入一串數字（可用逗號、空白或換行分隔），即可即時計算平均數與基本統計。")
+
+
+def parse_numbers(raw: str) -> list[float]:
+    if not raw:
+        return []
+
+    tokens = re.split(r"[\s,，、;；]+", raw.strip())
+    nums: list[float] = []
+    for tok in tokens:
+        if not tok:
+            continue
+        nums.append(float(tok))
+    return nums
+
+
+with st.container(border=True):
+    user_input = st.text_area(
+        "請輸入數字",
+        height=140,
+        placeholder="例如：90, 80, 100\n或\n90 80 100",
+    )
+    calc_btn = st.button("計算平均數", type="primary")
+
+    if calc_btn:
+        try:
+            numbers = parse_numbers(user_input)
+            if not numbers:
+                st.warning("請至少輸入一個有效數字。")
+            else:
+                s = pd.Series(numbers, dtype="float64")
+                st.success(f"平均數（Mean）= {s.mean():.4f}")
+                c1, c2, c3, c4 = st.columns(4)
+                c1.metric("筆數", f"{int(s.count())}")
+                c2.metric("總和", f"{s.sum():.4f}")
+                c3.metric("最小值", f"{s.min():.4f}")
+                c4.metric("最大值", f"{s.max():.4f}")
+                st.dataframe(
+                    pd.DataFrame({"輸入數字": numbers}),
+                    use_container_width=True,
+                    hide_index=True,
+                )
+        except ValueError:
+            st.error("偵測到非數字內容，請只輸入數字並以逗號/空白/換行分隔。")
+
+st.divider()
+st.header("APA 參考文獻 ↔ 檔案比對（ZIP 版）")
 st.caption("雲端限制：無法直接讀本機資料夾，所以改成上傳 ZIP → 解壓 → 比對 → 勾選 → 下載 ZIP。")
 
 
